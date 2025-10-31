@@ -26,6 +26,18 @@ logger.info(f"API Key present: {'Yes' if GROQ_API_KEY else 'No'}")
 def home():
     return render_template("index.html")
 
+@app.route("/api-status")
+def api_status():
+    """Check if API key is available"""
+    key_present = bool(GROQ_API_KEY)
+    key_preview = GROQ_API_KEY[:5] + "..." if GROQ_API_KEY and len(GROQ_API_KEY) > 5 else "Not set"
+    
+    return jsonify({
+        "api_key_present": key_present,
+        "key_preview": key_preview,
+        "message": "API key loaded successfully" if key_present else "No API key found in .env file"
+    })
+
 @app.route("/extract-pdf", methods=["POST"])
 def extract_pdf():
     """Extract text from uploaded PDF"""
@@ -53,8 +65,12 @@ def extract_pdf():
 
 @app.route("/generate-schedule", methods=["POST"])
 def generate_schedule():
-    if not GROQ_API_KEY:
-        return jsonify({"error": "⚠️ Please set GROQ_API_KEY in .env file"})
+    # Check for API key in request first, then fall back to env
+    api_key_override = request.json.get("api_key_override")
+    effective_api_key = api_key_override or GROQ_API_KEY
+    
+    if not effective_api_key:
+        return jsonify({"error": "⚠️ No API key available. Please add GROQ_API_KEY to .env or use the key input below."})
     
     syllabus_text = request.json.get("syllabus", "").strip()
     duration_weeks = request.json.get("duration", 10)
@@ -64,6 +80,7 @@ def generate_schedule():
         return jsonify({"error": "Please provide syllabus content!"})
     
     logger.info(f"📚 Generating schedule for {duration_weeks} weeks starting {start_date}")
+    logger.info(f"🔑 Using API key: {effective_api_key[:5]}...")
     
     system_msg = """You are an expert academic planner and educational content curator. Create a comprehensive study schedule with YouTube videos and quiz questions.
 
@@ -121,7 +138,7 @@ Return a properly formatted JSON response."""
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Authorization": f"Bearer {effective_api_key}",
                 "Content-Type": "application/json"
             },
             json={

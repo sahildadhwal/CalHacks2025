@@ -17,6 +17,13 @@ function initializeApp() {
     
     // Setup generate button
     document.getElementById('generateBtn').addEventListener('click', generateSchedule);
+    
+    // Check API status and load any saved key
+    checkApiStatus();
+    loadApiKeyFromStorage();
+    
+    // Load saved progress
+    loadProgress();
 }
 
 function setupFileUpload() {
@@ -99,7 +106,93 @@ async function handleFileUpload(file) {
     }
 }
 
+// API Key Management
+async function checkApiStatus() {
+    try {
+        const response = await fetch('/api-status');
+        const data = await response.json();
+        
+        document.getElementById('apiKeyPreview').textContent = data.key_preview;
+        document.getElementById('apiKeyPreview').style.color = data.api_key_present ? '#10b981' : '#ef4444';
+        
+        // If no API key found, show input field
+        if (!data.api_key_present) {
+            showApiKeyInput();
+        }
+        
+        return data.api_key_present;
+    } catch (error) {
+        console.error('Error checking API status:', error);
+        document.getElementById('apiKeyPreview').textContent = 'Error checking';
+        document.getElementById('apiKeyPreview').style.color = '#ef4444';
+        showApiKeyInput();
+        return false;
+    }
+}
+
+function showApiKeyInput() {
+    document.getElementById('apiKeyInputContainer').style.display = 'block';
+}
+
+function hideApiKeyInput() {
+    document.getElementById('apiKeyInputContainer').style.display = 'none';
+    document.getElementById('apiKeyInput').value = '';
+}
+
+function toggleApiKeyInput() {
+    const container = document.getElementById('apiKeyInputContainer');
+    if (container.style.display === 'none') {
+        showApiKeyInput();
+    } else {
+        hideApiKeyInput();
+    }
+}
+
+async function saveApiKey() {
+    const apiKey = document.getElementById('apiKeyInput').value.trim();
+    
+    if (!apiKey) {
+        alert('Please enter an API key');
+        return;
+    }
+    
+    if (apiKey.length < 20) {
+        alert('Please enter a valid API key');
+        return;
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('groq_api_key', apiKey);
+    
+    // Update display
+    document.getElementById('apiKeyPreview').textContent = apiKey.substring(0, 5) + '...';
+    document.getElementById('apiKeyPreview').style.color = '#10b981';
+    
+    hideApiKeyInput();
+    
+    alert('API key saved to local storage! You may need to refresh the page for it to take effect.');
+}
+
+function loadApiKeyFromStorage() {
+    const savedKey = localStorage.getItem('groq_api_key');
+    if (savedKey) {
+        document.getElementById('apiKeyPreview').textContent = savedKey.substring(0, 5) + '...';
+        document.getElementById('apiKeyPreview').style.color = '#10b981';
+    }
+    return savedKey;
+}
+
 async function generateSchedule() {
+    // Check if we have API key
+    const envKeyAvailable = await checkApiStatus();
+    const localKey = localStorage.getItem('groq_api_key');
+    
+    if (!envKeyAvailable && !localKey) {
+        alert('No API key found. Please set up your Groq API key in the section below.');
+        document.getElementById('apiKeyInputContainer').style.display = 'block';
+        return;
+    }
+    
     const syllabusText = document.getElementById('syllabusText').value.trim();
     const duration = parseInt(document.getElementById('duration').value);
     const startDate = document.getElementById('startDate').value;
@@ -121,7 +214,9 @@ async function generateSchedule() {
             body: JSON.stringify({
                 syllabus: syllabusText,
                 duration: duration,
-                start_date: startDate
+                start_date: startDate,
+                // Include local storage key if no env key
+                api_key_override: !envKeyAvailable ? localKey : null
             })
         });
         
@@ -443,9 +538,6 @@ function formatScheduleAsText(schedule) {
     
     return text;
 }
-
-// Load saved progress on startup
-loadProgress();
 
 // Add completed styling
 const style = document.createElement('style');

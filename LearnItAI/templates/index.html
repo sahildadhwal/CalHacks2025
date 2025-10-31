@@ -141,6 +141,30 @@
                     </div>
                 </div>
             </section>
+
+            <!-- API Key Status Section -->
+            <section class="api-key-section" style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h4 style="color: white; margin-bottom: 0.25rem;">
+                            <i class="fas fa-key"></i> API Status
+                        </h4>
+                        <small style="color: rgba(255,255,255,0.8);">
+                            Key: <span id="apiKeyPreview">Checking...</span>
+                        </small>
+                    </div>
+                    <div id="apiKeyInputContainer" style="display: none;">
+                        <input type="password" id="apiKeyInput" placeholder="Paste your Groq API key" 
+                               style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
+                        <button onclick="saveApiKey()" class="btn-secondary" style="margin-left: 0.5rem;">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                    <button id="toggleApiKeyBtn" onclick="toggleApiKeyInput()" class="btn-secondary">
+                        <i class="fas fa-edit"></i> Change Key
+                    </button>
+                </div>
+            </section>
         </main>
 
         <!-- Progress Tracker (Fixed) -->
