@@ -7,7 +7,8 @@
 
 **🌐 Live Site:** [calhacks2025-learnitai.up.railway.app](https://calhacks2025-learnitai.up.railway.app)
 
-**[🌐 Live Demo Video]([https://calhacks2025-learnitai.up.railway.app](https://www.youtube.com/watch?v=3X_qVOhj9WM))
+**🌐 Live Demo Video:** [YouTube Demo](https://www.youtube.com/watch?v=3X_qVOhj9WM)
+
 ---
 
 ## 🎯 Problem Statement
